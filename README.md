@@ -6,13 +6,13 @@
 
 - Estructura del projecte
 
-* src/: conté els arxius necessàris per aplicar web scraping
-* csv/montipedia.csv: conté el dataset generat
-* pdf/montipedia.pdf: conté el document amb les respostes de la pràctica
+** src/: conté els arxius necessàris per aplicar web scraping
+** csv/montipedia.csv: conté el dataset generat
+** pdf/montipedia.pdf: conté el document amb les respostes de la pràctica
 
 - Desenvolupat per:
-* Mireia Calzada (https://github.com/mcalzada) 
-* Noemí Lorente (https://github.com/noemilt)
+** Mireia Calzada (https://github.com/mcalzada) 
+** Noemí Lorente (https://github.com/noemilt)
 
 
 
