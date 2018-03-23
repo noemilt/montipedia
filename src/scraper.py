@@ -1,4 +1,4 @@
-import urllib
+import urllib.request
 import re
 import time
 from bs4 import BeautifulSoup
@@ -10,14 +10,14 @@ class MontipediaScraper():
 
 	def __init__(self):
 		self.url = "http://www.montipedia.com"
-		self.subdomain = "/montanas"
+		self.subdomain = "/montanas/"
 		self.data = []
 #		self.geolocator = Yandex()
 #		self.reason_classifier = (
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
-		response = urllib.urlopen(url)
+		response = urllib.request.urlopen(url)
 		html = response.read()
 		return html
 
@@ -133,16 +133,20 @@ class MontipediaScraper():
 		self.data.append(example_data)
 
 	def __get_letters_links(self, html):
+		print (" __get_letters_links.\n")
 		bs = BeautifulSoup(html, 'html.parser')
 #		anchors = bs.findAll('a', href=True)
-		ul = bs.find('ul', attrs={'id':'abc'})
-		li = ul.findAll('li')
+		uls = bs.find('ul', attrs={'id':'abc'})
+		lis = uls.findAll('li')
+
+
+		
 		letters_links = []
-		for a in li:
-			# Match a year from 1900 to 2099
-			if re.match("montana/[a-z]", a.text.strip()):
+		for li in lis:
+			a = li.next_element
+			if a.name == 'a':
 				href = a['href']
-				# Preppend '/' if needed
+#				print (" href "+href)
 				if href[0] != '/':
 					href = '/' + href
 				letters_links.append(href)
@@ -152,7 +156,7 @@ class MontipediaScraper():
 	def scrape(self):
 		print ("Web Scraping of montipedia data from " + "'" + self.url + "'...")
 
-		print ("This process could take roughly 45 minutes.\n")
+		print ("This process could take roughly ??? minutes.\n")
 
 		# Start timer
 		start_time = time.time()
