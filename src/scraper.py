@@ -1,4 +1,4 @@
-import urllib2
+import urllib
 import re
 import time
 from bs4 import BeautifulSoup
@@ -12,12 +12,12 @@ class MontipediaScraper():
 		self.url = "http://www.montipedia.com"
 		self.subdomain = "/montanas"
 		self.data = []
-		self.geolocator = Yandex()
+#		self.geolocator = Yandex()
 #		self.reason_classifier = (
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
-		response = urllib2.urlopen(url)
+		response = urllib.urlopen(url)
 		html = response.read()
 		return html
 
@@ -132,26 +132,27 @@ class MontipediaScraper():
 		# Store the data
 		self.data.append(example_data)
 
-	def __get_years_links(self, html):
+	def __get_letters_links(self, html):
 		bs = BeautifulSoup(html, 'html.parser')
-		anchors = bs.findAll('a', href=True)
-		years_links = []
-		for a in anchors:
+#		anchors = bs.findAll('a', href=True)
+		ul = bs.find('ul', attrs={'id':'abc'})
+		li = ul.findAll('li')
+		letters_links = []
+		for a in li:
 			# Match a year from 1900 to 2099
-			if re.match("(19|20)[0-9][0-9]", a.text.strip()):
+			if re.match("montana/[a-z]", a.text.strip()):
 				href = a['href']
 				# Preppend '/' if needed
 				if href[0] != '/':
 					href = '/' + href
-				years_links.append(href)
+				letters_links.append(href)
 
-		return years_links
+		return letters_links
 
 	def scrape(self):
-		print "Web Scraping of planes' crashes data from " + \
-			"'" + self.url + "'..."
+		print ("Web Scraping of montipedia data from " + "'" + self.url + "'...")
 
-		print "This process could take roughly 45 minutes.\n"
+		print ("This process could take roughly 45 minutes.\n")
 
 		# Start timer
 		start_time = time.time()
@@ -160,33 +161,31 @@ class MontipediaScraper():
 		html = self.__download_html(self.url + self.subdomain)
 		bs = BeautifulSoup(html, 'html.parser')
 
-		# Get the links of each year
-		years_links = self.__get_years_links(html)
+		# Get the links of each letter
+		letters_links = self.__get_letters_links(html)
 
-		# For each year, get its accidents' links
-		accidents_links = []
-		for y in years_links:
-			print "Found link to a year of crash: " + self.url + y
-			html = self.__download_html(self.url + y)
-			current_year_accidents = self.__get_accidents_links(html)
-			accidents_links.append(current_year_accidents)
+		# For each letter, get its montana' links
+		montana_links = []
+		for y in letters_links:
+			print ("Found link to a letter of mountain: " + self.url + y)
+##			html = self.__download_html(self.url + y)
+##			current_letter_montana = self.__get_montana_links(html)
+##			montana_links.append(current_letter_montana)
 
 			# Uncomment this break in case of debug mode
 			#break
 
-		# For each accident, extract its data
-		for i in range(len(accidents_links)):
-			for j in range(len(accidents_links[i])):
-				print "scraping crash data: " + self.url + \
-					accidents_links[i][j]
-				html = self.__download_html(self.url + \
-					accidents_links[i][j])
-				self.__scrape_example_data(html)
+		# For each montana, extract its data
+##		for i in range(len(montana_links)):
+##			for j in range(len(montana_links[i])):
+##				print ("scraping montana data: " + self.url + montana_links[i][j])
+##				html = self.__download_html(self.url + \
+##					montana_links[i][j])
+##				self.__scrape_example_data(html)
 
 		# Show elapsed time
 		end_time = time.time()
-		print "\nelapsed time: " + \
-			str(round(((end_time - start_time) / 60) , 2)) + " minutes"
+		print ("\nelapsed time: " + str(round(((end_time - start_time) / 60) , 2)) + " minutes")
 
 	def data2csv(self, filename):
 		# Overwrite to the specified file.
