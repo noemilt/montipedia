@@ -21,25 +21,54 @@ class MontipediaScraper():
 		html = response.read()
 		return html
 
-	def __get_montipedia_links(self, html):
+	def __get_montana_links(self, montana):
+		pag_links = []
+		pag_links.append(montana)
+
+		html = self.__download_html(self.url + montana)
+
 		bs = BeautifulSoup(html, 'html.parser')
-		tds = bs.findAll('td')
-		montipedia_links = []
-		for td in tds:
-			# Has this <td> element an <a> child?
-			a = td.next_element.next_element
+
+		divpag = bs.find("div", {"id": "paginador"})
+		aas = divpag.findAll('a')			
+		for a in aas:
 			if a.name == 'a':
 				href = a['href']
-				# Preppend '/' if needed
-				if href[0] != '/':
-					href = '/' + href
-				# Extract year
-				year = re.search('[0-9]{4}', href).group(0)
-				# Preppend year
-				href = '/' + year + href
-				montipedia_links.append(href)
+				pag_links.append(href)
+				print("pag_links: " + href)
 
-		return montipedia_links
+		for i in range(len(pag_links)):
+			pag = pag_links[i]
+			print("pagina: " + pag)
+			html = self.__download_html(self.url + pag)
+			bs = BeautifulSoup(html, 'html.parser')
+			divact = bs.find("div", {"id": "montanas"})
+			ul1 = divact.find("ul", {"id": "abc"})
+			ul2 = ul1.find_next_sibling('ul')
+			lis = ul2.findAll("li")
+
+	#		ul = uls.find_next("ul")
+	#		aas= uls.select('li > a[href*="/montanas/"]')
+
+
+			montana_links = []
+			for li in lis:
+				# Has this <li> element an <a> child?
+				a = li.next_element
+				if a.name == 'a':
+					href = a['href']
+					# Preppend '/' if needed
+#					if href[0] != '/':
+#						href = '/' + href
+					# Extract year
+					#year = re.search('[0-9]{4}', href).group(0)
+					# Preppend year
+					#href = '/' + year + href
+					print("href: " + a['href'] + " Content: " + a.contents[0] + " Title: " + a['title'])
+					montana_links.append(href)
+		
+
+		return montana_links
 
 	def __clean_feature_name(self, feature_name):
 		feature_name = feature_name.replace(':', '')
@@ -169,12 +198,11 @@ class MontipediaScraper():
 		letters_links = self.__get_letters_links(html)
 
 		# For each letter, get its montana' links
-		montana_links = []
+		montanas_links = []
 		for y in letters_links:
-			print ("Found link to a letter of mountain: " + self.url + y)
-##			html = self.__download_html(self.url + y)
-##			current_letter_montana = self.__get_montana_links(html)
-##			montana_links.append(current_letter_montana)
+			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
+			current_letter_montana = self.__get_montana_links(y)
+#			montanas_links.append(current_letter_montana)
 
 			# Uncomment this break in case of debug mode
 			#break
@@ -185,7 +213,7 @@ class MontipediaScraper():
 ##				print ("scraping montana data: " + self.url + montana_links[i][j])
 ##				html = self.__download_html(self.url + \
 ##					montana_links[i][j])
-##				self.__scrape_example_data(html)
+##				self.__scrape_montana_data(html)
 
 		# Show elapsed time
 		end_time = time.time()
