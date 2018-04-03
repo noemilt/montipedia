@@ -17,12 +17,16 @@ class MontipediaScraper():
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
+#PENDENT: cal fer proves per a que no peti amb la Ñ. He trobat aquesta info sobre parse https://docs.python.org/dev/library/urllib.parse.html#urllib.parse.quote
+		url=urllib.parse.unquote(url, encoding='utf-8')  
 		response = urllib.request.urlopen(url)
+#		html=response.read().decode(charset)
 		html = response.read()
 		return html
 
 	def __get_montana_links(self, montana):
 		pag_links = []
+		montana_links = []
 		pag_links.append(montana)
 
 		html = self.__download_html(self.url + montana)
@@ -30,14 +34,15 @@ class MontipediaScraper():
 		bs = BeautifulSoup(html, 'html.parser')
 
 		divpag = bs.find("div", {"id": "paginador"})
-		aas = divpag.findAll('a')			
-		for a in aas:
-			if a.name == 'a':
-				href = a['href']
-				pag_links.append(href)
-				print("pag_links: " + href)
-
-		for i in range(len(pag_links)):
+		if divpag:
+			aas = divpag.findAll('a')			
+			for a in aas:
+				if a.name == 'a':
+					href = a['href']
+					pag_links.append(href)
+					print("pag_links: " + href)
+#PENDENT: controlar si llargada de pag_links es 1, vol dir que no hi ha paginador i llavors no s'ha de restar el -1. Ex. la lletra F no la processa pq només té una pàgina
+		for i in range(len(pag_links)-1):
 			pag = pag_links[i]
 			print("pagina: " + pag)
 			html = self.__download_html(self.url + pag)
@@ -46,12 +51,7 @@ class MontipediaScraper():
 			ul1 = divact.find("ul", {"id": "abc"})
 			ul2 = ul1.find_next_sibling('ul')
 			lis = ul2.findAll("li")
-
-	#		ul = uls.find_next("ul")
-	#		aas= uls.select('li > a[href*="/montanas/"]')
-
-
-			montana_links = []
+		
 			for li in lis:
 				# Has this <li> element an <a> child?
 				a = li.next_element
@@ -66,7 +66,7 @@ class MontipediaScraper():
 					#href = '/' + year + href
 					print("href: " + a['href'] + " Content: " + a.contents[0] + " Title: " + a['title'])
 					montana_links.append(href)
-		
+	
 
 		return montana_links
 
@@ -112,54 +112,64 @@ class MontipediaScraper():
 		else:
 			return str(location.latitude), str(location.longitude)
 
-	def __scrape_example_data(self, html):
+	def __scrape_montana_data(self, html):
 		bs = BeautifulSoup(html, 'html.parser')
-		example_data = []
+		montana_data = []
 		features_names = []
-		trs = bs.findAll('tr')
+		h1 = bs.find('h1')
+		print("h1: "+ h1.text)
+		h2 = bs.find('h2')
+		print("h2: "+ h2.text)
+		p = h2.find_next_sibling('p')
+		print("p: "+ p.text)
+		ul = p.find_next_sibling("ul")
+		lis = ul.findAll('li')		
+		for li in lis:
+			print("li: "+ li.text)
+#PENDENT: parsejar h1,h2,p,li... per extreure els atributs, https://stackoverflow.com/questions/15037301/python-extracting-data-from-html-using-split
 
 		# The first <tr> element does not provide useful info
-		trs.pop(0)
+#		trs.pop(0)
 
-		for tr in trs:
-			tds = tr.findAll('td')
+#		for tr in trs:
+#			tds = tr.findAll('td')
 
 			# Read features' names?
-			if len(self.data) == 0:
-				feature_name = tds[0].next_element.text
-				feature_name_cleaned = self.__clean_feature_name(feature_name)
-				features_names.append(feature_name_cleaned)
+#			if len(self.data) == 0:
+#				feature_name = tds[0].next_element.text
+#				feature_name_cleaned = self.__clean_feature_name(feature_name)
+#				features_names.append(feature_name_cleaned)
 
-			example_datum = tds[1].next_element.text
-			example_datum_cleaned = self.__clean_example_datum(example_datum)
-			example_data.append(example_datum_cleaned)
+#			example_datum = tds[1].next_element.text
+#			example_datum_cleaned = self.__clean_example_datum(example_datum)
+#			montana_data.append(example_datum_cleaned)
 
 			# If the datum is the LOCATION (index 2), add latitude and longitude
-			if tr == trs[2]:
-				location = (
-					self.__get_geographical_coordinates(tds[1].next_element.text)
-				)
-				if len(self.data) == 0:
-					features_names.append('Latitude')
-					features_names.append('Longitude')
-				example_data.append(location[0])
-				example_data.append(location[1])
+#			if tr == trs[2]:
+#				location = (
+#					self.__get_geographical_coordinates(tds[1].next_element.text)
+#				)
+#				if len(self.data) == 0:
+#					features_names.append('Latitude')
+#					features_names.append('Longitude')
+#				montana_data.append(location[0])
+#				montana_data.append(location[1])
 
 			# If the datum is the SUMMARY (index 12), assign it a category
 			# (reason) using text mining techniques
-			elif tr == trs[12]:
-				summary = tds[1].next_element.text
-				if len(self.data) == 0:
-					features_names.append('Reason')
+#			elif tr == trs[12]:
+#				summary = tds[1].next_element.text
+#				if len(self.data) == 0:
+#					features_names.append('Reason')
 ##				reason = self.reason_classifier.classify(summary)
-##				example_data.append(reason)
+##				montana_data.append(reason)
 
 		# Store features' names
 		if len(features_names) > 0:
 			self.data.append(features_names)
 
 		# Store the data
-		self.data.append(example_data)
+		self.data.append(montana_data)
 
 	def __get_letters_links(self, html):
 		print (" __get_letters_links.\n")
@@ -202,18 +212,18 @@ class MontipediaScraper():
 		for y in letters_links:
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
-#			montanas_links.append(current_letter_montana)
-
+			montanas_links.append(current_letter_montana)
+#PENDENT: hi ha el break per només fer proves amb la lletra A
 			# Uncomment this break in case of debug mode
-			#break
+			break
 
 		# For each montana, extract its data
-##		for i in range(len(montana_links)):
-##			for j in range(len(montana_links[i])):
-##				print ("scraping montana data: " + self.url + montana_links[i][j])
-##				html = self.__download_html(self.url + \
-##					montana_links[i][j])
-##				self.__scrape_montana_data(html)
+		for i in range(len(montanas_links)):
+			for j in range(len(montanas_links[i])):
+				print ("scraping montana data: " + self.url + montanas_links[i][j])
+				html = self.__download_html(self.url + \
+					montanas_links[i][j])
+				self.__scrape_montana_data(html)
 
 		# Show elapsed time
 		end_time = time.time()
