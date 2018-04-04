@@ -1,6 +1,7 @@
 import urllib.request
 import re
 import time
+import string
 from bs4 import BeautifulSoup
 from dateutil import parser
 from geopy.geocoders import Yandex
@@ -41,8 +42,9 @@ class MontipediaScraper():
 					href = a['href']
 					pag_links.append(href)
 					print("pag_links: " + href)
-#PENDENT: controlar si llargada de pag_links es 1, vol dir que no hi ha paginador i llavors no s'ha de restar el -1. Ex. la lletra F no la processa pq només té una pàgina
-		for i in range(len(pag_links)-1):
+			pag_links.pop()
+
+		for i in range(len(pag_links)):
 			pag = pag_links[i]
 			print("pagina: " + pag)
 			html = self.__download_html(self.url + pag)
@@ -116,16 +118,34 @@ class MontipediaScraper():
 		bs = BeautifulSoup(html, 'html.parser')
 		montana_data = []
 		features_names = []
-		h1 = bs.find('h1')
-		print("h1: "+ h1.text)
+		h1 = bs.find('h1').text
+		print("h1: "+ h1)
+		nom = h1[0:h1.find(",")].strip()
+		print("nom: "+ nom)
+		features_names.append('nom')
+		montana_data.append(nom)
+		tipus = h1[h1.find(",")+1:h1.find("(")].strip()
+		print("tipus: "+ tipus)
+#h2 conté la unidad de relieve i el continente
 		h2 = bs.find('h2')
-		print("h2: "+ h2.text)
 		p = h2.find_next_sibling('p')
 		print("p: "+ p.text)
+		h2 = h2.text
+		print("h2: "+ h2)
+		continent = h2[h2.find("(")+1:h2.find(")")].strip()
+		print("continent: "+ continent)
+		
+#PENDENT: de la <p> recuperar keywords
+		
 		ul = p.find_next_sibling("ul")
 		lis = ul.findAll('li')		
 		for li in lis:
 			print("li: "+ li.text)
+			if ":" in li.text:
+				print("clau: " + li.text.split(":")[0])
+				print("valor: " + li.text.split(":")[1])
+
+
 #PENDENT: parsejar h1,h2,p,li... per extreure els atributs, https://stackoverflow.com/questions/15037301/python-extracting-data-from-html-using-split
 
 		# The first <tr> element does not provide useful info
@@ -166,7 +186,8 @@ class MontipediaScraper():
 
 		# Store features' names
 		if len(features_names) > 0:
-			self.data.append(features_names)
+			if len(self.data) == 0:
+				self.data.append(features_names)
 
 		# Store the data
 		self.data.append(montana_data)
@@ -209,7 +230,8 @@ class MontipediaScraper():
 
 		# For each letter, get its montana' links
 		montanas_links = []
-		for y in letters_links:
+		for y in letters_links:			
+			y ='/montanas/f/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)

@@ -4,4 +4,4 @@ output_file = "dataset.csv"
 
 scraper = MontipediaScraper();
 scraper.scrape();
-#scraper.data2csv(output_file);
+scraper.data2csv(output_file);
