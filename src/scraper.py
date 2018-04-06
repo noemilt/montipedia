@@ -1,4 +1,5 @@
 import urllib.request
+import requests
 import re
 import time
 import string
@@ -18,12 +19,11 @@ class MontipediaScraper():
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
-#PENDENT: cal fer proves per a que no peti amb la Ñ. He trobat aquesta info sobre parse https://docs.python.org/dev/library/urllib.parse.html#urllib.parse.quote
 		url=urllib.parse.unquote(url, encoding='utf-8')  
-		response = urllib.request.urlopen(url)
-#		html=response.read().decode(charset)
-		html = response.read()
+		html = requests.get(url).content
+
 		return html
+
 
 	def __get_montana_links(self, montana):
 		pag_links = []
@@ -51,6 +51,7 @@ class MontipediaScraper():
 			bs = BeautifulSoup(html, 'html.parser')
 			divact = bs.find("div", {"id": "montanas"})
 			ul1 = divact.find("ul", {"id": "abc"})
+#PENDENT: cal fer proves per a que no peti quan no hi ha cap montanya (exemple /ñ )
 			ul2 = ul1.find_next_sibling('ul')
 			lis = ul2.findAll("li")
 		
@@ -231,13 +232,13 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
-			y ='/montanas/f/'
+			#y ='/montanas/f/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
 #PENDENT: hi ha el break per només fer proves amb la lletra A
 			# Uncomment this break in case of debug mode
-			break
+			#break
 
 		# For each montana, extract its data
 		for i in range(len(montanas_links)):
