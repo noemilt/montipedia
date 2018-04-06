@@ -1,4 +1,5 @@
 import urllib.request
+import requests
 import re
 import time
 import string
@@ -18,11 +19,14 @@ class MontipediaScraper():
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
-#PENDENT: cal fer proves per a que no peti amb la Ñ. He trobat aquesta info sobre parse https://docs.python.org/dev/library/urllib.parse.html#urllib.parse.quote
-		url=urllib.parse.unquote(url, encoding='utf-8')  
-		response = urllib.request.urlopen(url)
-#		html=response.read().decode(charset)
-		html = response.read()
+		try:
+			url=urllib.parse.unquote(url, encoding='utf-8')  
+			html = requests.get(url).content
+
+		except ValueError:			
+			print ("****** Error __download_html ******")
+			pass
+			
 		return html
 
 	def __get_montana_links(self, montana):
@@ -44,6 +48,7 @@ class MontipediaScraper():
 					print("pag_links: " + href)
 			pag_links.pop()
 
+
 		for i in range(len(pag_links)):
 			pag = pag_links[i]
 			print("pagina: " + pag)
@@ -52,23 +57,16 @@ class MontipediaScraper():
 			divact = bs.find("div", {"id": "montanas"})
 			ul1 = divact.find("ul", {"id": "abc"})
 			ul2 = ul1.find_next_sibling('ul')
-			lis = ul2.findAll("li")
+			if ul2:
+				lis = ul2.findAll("li")
 		
-			for li in lis:
-				# Has this <li> element an <a> child?
-				a = li.next_element
-				if a.name == 'a':
-					href = a['href']
-					# Preppend '/' if needed
-#					if href[0] != '/':
-#						href = '/' + href
-					# Extract year
-					#year = re.search('[0-9]{4}', href).group(0)
-					# Preppend year
-					#href = '/' + year + href
-					print("href: " + a['href'] + " Content: " + a.contents[0] + " Title: " + a['title'])
-					montana_links.append(href)
-	
+				for li in lis:
+					# Has this <li> element an <a> child?
+					a = li.next_element
+					if a.name == 'a':
+						href = a['href']
+						print("href: " + a['href'] + " Content: " + a.contents[0] + " Title: " + a['title'])
+						montana_links.append(href)
 
 		return montana_links
 
@@ -118,95 +116,167 @@ class MontipediaScraper():
 		bs = BeautifulSoup(html, 'html.parser')
 		montana_data = []
 		features_names = []
-		h1 = bs.find('h1').text
-		print("h1: "+ h1)
-		nom = h1[0:h1.find(",")].strip()
-		print("nom: "+ nom)
-		features_names.append('nom')
-		montana_data.append(nom)
-		tipus = h1[h1.find(",")+1:h1.find("(")].strip()
-		print("tipus: "+ tipus)
-#h2 conté la unidad de relieve i el continente
-		h2 = bs.find('h2')
-		p = h2.find_next_sibling('p')
-		print("p: "+ p.text)
-		h2 = h2.text
-		print("h2: "+ h2)
-		continent = h2[h2.find("(")+1:h2.find(")")].strip()
-		print("continent: "+ continent)
-		
-#PENDENT: de la <p> recuperar keywords
-		
-		ul = p.find_next_sibling("ul")
-		lis = ul.findAll('li')		
-		for li in lis:
-			print("li: "+ li.text)
-			if ":" in li.text:
-				print("clau: " + li.text.split(":")[0])
-				print("valor: " + li.text.split(":")[1])
+		keyword_data=''
 
+		#divact = bs.find("div", {"id": "montanas"})
 
-#PENDENT: parsejar h1,h2,p,li... per extreure els atributs, https://stackoverflow.com/questions/15037301/python-extracting-data-from-html-using-split
+		#capçalera amb els noms dels atributs
+		if len(self.data) == 0:
+			features_names.insert(0,'Nom')
+			features_names.insert(1,'Tipus')	
+			features_names.insert(2,'Continent')
+			features_names.insert(3,'Unitat de relleu')
+			features_names.insert(4,'País')
+			features_names.insert(5,'Cumbre')
+			features_names.insert(6,'Regió')
+			features_names.insert(7,'Altitud')
+			features_names.insert(8,'Classificació per alçada')
+			features_names.insert(9,'Latitud')
+			features_names.insert(10,'Longitud')
+			features_names.insert(11,'Descripció')
+			features_names.insert(12,'Keywords')
 
-		# The first <tr> element does not provide useful info
-#		trs.pop(0)
+		#recuperem el nom
+		h1 = bs.find('h1')
+		if not h1:
+			#la pàgina no conté el títol, per tant, és errònia i no la parsejem
+			pass
+		else:
+			h1=h1.text
+			nom = h1[0:h1.find(",")].strip()
+			#print("nom: "+ nom)
+			montana_data.insert(0,nom)
 
-#		for tr in trs:
-#			tds = tr.findAll('td')
+			#recuperem el tipus
+			tipus = h1[h1.find(",")+1:h1.find("(")].strip()
+			#print("tipus: "+ tipus)
+			montana_data.insert(1,tipus)
 
-			# Read features' names?
-#			if len(self.data) == 0:
-#				feature_name = tds[0].next_element.text
-#				feature_name_cleaned = self.__clean_feature_name(feature_name)
-#				features_names.append(feature_name_cleaned)
+			#recuperem la descripcio
+			h2 = bs.find('h2')
+			descripcio = h2.find_next_sibling('p')
+			#print("descripcio: "+ descripcio.text)
 
-#			example_datum = tds[1].next_element.text
-#			example_datum_cleaned = self.__clean_example_datum(example_datum)
-#			montana_data.append(example_datum_cleaned)
+			#recuperem els keywords
+			aas = descripcio.findAll('a')
+			for a in aas:
+				#if a.name == 'a':
+				if a.contents[0].name=='a':
+					keyword = str(a.contents[0].contents[0])
+				else:
+					keyword = str(a.contents[0])
+				#print("keyword: "+keyword)
+				keyword_data = keyword_data + keyword + ','
+			keyword_data=keyword_data[:len(keyword_data)-1]
 
-			# If the datum is the LOCATION (index 2), add latitude and longitude
-#			if tr == trs[2]:
-#				location = (
-#					self.__get_geographical_coordinates(tds[1].next_element.text)
-#				)
-#				if len(self.data) == 0:
-#					features_names.append('Latitude')
-#					features_names.append('Longitude')
-#				montana_data.append(location[0])
-#				montana_data.append(location[1])
+			#recuperem el continent
+			h2 = h2.text
+			continent = h2[h2.find("(")+1:h2.find(")")].strip()
+			#print("continent: "+ continent)
+			montana_data.insert(2,continent)
+			
+			#recuperem la resta d'atributs: unitat de relleu, país, regió, altitud, latitud i longitud	
+			#creem la classificació en funció de l'altitud
+			ul = descripcio.find_next_sibling("ul")
+			lis = ul.findAll('li')		
+			atribut=3
+			i=0
+			while i<=7:
+				if i<len(lis):
+					li = lis[i]
+				else:
+					li = ""
+				print("li: "+ str(li))
+				print("Atribut: "+str(atribut))
 
-			# If the datum is the SUMMARY (index 12), assign it a category
-			# (reason) using text mining techniques
-#			elif tr == trs[12]:
-#				summary = tds[1].next_element.text
-#				if len(self.data) == 0:
-#					features_names.append('Reason')
-##				reason = self.reason_classifier.classify(summary)
-##				montana_data.append(reason)
+				if ":" in str(li):
+					clau=li.text.split(":")[0]
+					valor=li.text.split(":")[1].strip()
+				elif "Cumbre" in str(li):	
+					clau="Cumbre"
+					valor=li.text
+					valor=valor[7:]
+				else:
+					clau=""
+					valor=""
+				print("clau: " + clau)
+				print("valor: " + valor)
 
-		# Store features' names
-		if len(features_names) > 0:
-			if len(self.data) == 0:
+				if "Unidad de relieve" in clau:
+					montana_data.insert(3,valor)
+				elif "País" in clau:
+					pais=valor[0:valor.find("(")].strip()				
+					montana_data.insert(4,pais)
+				elif "Cumbre" in clau:
+					montana_data.insert(5,valor)	
+				elif "Región" in clau:
+					montana_data.insert(6,valor)					
+				elif "Altitud" in clau:
+					#si estem en atribut 6, vol dir que no ha entrat a regió, per tant l'inserim nul.la
+					if atribut==6:
+						montana_data.insert(6,"")						
+					altitud=valor[0:valor.find("m")].strip()
+					altitud=int(re.sub('\D', '', altitud))
+					montana_data.insert(7,valor)		
+					
+					#Classificació per alçada
+					if altitud < 1000: 
+						classify="menor de 1000"
+					elif altitud < 2000:
+						classify="mil"
+					elif altitud < 3000:
+						classify="dos mil"
+					elif altitud < 4000:
+						classify="tres mil"
+					elif altitud < 5000:
+						classify="quatre mil"
+					elif altitud < 6000:
+						classify="cinc mil"
+					elif altitud < 7000:
+						classify="sis mil"
+					elif altitud < 8000:
+						classify="set mil"
+					else:
+						classify="vuit mil"
+
+					montana_data.insert(8,classify)	
+					atribut=8
+
+				elif "Latitud" in clau:
+					montana_data.insert(9,valor)	
+				elif "Longitud" in clau:
+					montana_data.insert(10,valor)					
+				elif atribut==9:
+					montana_data.insert(9,"")
+				elif atribut==10:
+					montana_data.insert(10,"")	
+
+				atribut+=1
+				i+=1
+
+					
+
+			montana_data.insert(11,descripcio.text)	
+			montana_data.insert(12,keyword_data)		
+
+			# Store features' names
+			if len(features_names) > 0:
 				self.data.append(features_names)
 
-		# Store the data
-		self.data.append(montana_data)
+			# Store the data
+			self.data.append(montana_data)
 
 	def __get_letters_links(self, html):
 		print (" __get_letters_links.\n")
 		bs = BeautifulSoup(html, 'html.parser')
-#		anchors = bs.findAll('a', href=True)
 		uls = bs.find('ul', attrs={'id':'abc'})
 		lis = uls.findAll('li')
-
-
 		
 		letters_links = []
 		for li in lis:
 			a = li.next_element
 			if a.name == 'a':
 				href = a['href']
-#				print (" href "+href)
 				if href[0] != '/':
 					href = '/' + href
 				letters_links.append(href)
@@ -231,21 +301,21 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
-			y ='/montanas/f/'
+			#y ='/montanas/b/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
-#PENDENT: hi ha el break per només fer proves amb la lletra A
+
 			# Uncomment this break in case of debug mode
-			break
+			#break
 
 		# For each montana, extract its data
 		for i in range(len(montanas_links)):
 			for j in range(len(montanas_links[i])):
 				print ("scraping montana data: " + self.url + montanas_links[i][j])
-				html = self.__download_html(self.url + \
-					montanas_links[i][j])
-				self.__scrape_montana_data(html)
+				html = self.__download_html(self.url + montanas_links[i][j])
+				if html:
+					self.__scrape_montana_data(html)
 
 		# Show elapsed time
 		end_time = time.time()
