@@ -19,6 +19,7 @@ class MontipediaScraper():
 #			ReasonClassifier("../train/summary_train_set.txt"))
 
 	def __download_html(self, url):
+<<<<<<< HEAD
 		try:
 			url=urllib.parse.unquote(url, encoding='utf-8')  
 			html = requests.get(url).content
@@ -27,7 +28,13 @@ class MontipediaScraper():
 			print ("****** Error __download_html ******")
 			pass
 			
+=======
+		url=urllib.parse.unquote(url, encoding='utf-8')  
+		html = requests.get(url).content
+
+>>>>>>> 775ed4ae4fad8b25c16e16dede03c1cc61430db2
 		return html
+
 
 	def __get_montana_links(self, montana):
 		pag_links = []
@@ -56,6 +63,7 @@ class MontipediaScraper():
 			bs = BeautifulSoup(html, 'html.parser')
 			divact = bs.find("div", {"id": "montanas"})
 			ul1 = divact.find("ul", {"id": "abc"})
+#PENDENT: cal fer proves per a que no peti quan no hi ha cap montanya (exemple /ñ )
 			ul2 = ul1.find_next_sibling('ul')
 			if ul2:
 				lis = ul2.findAll("li")
@@ -301,7 +309,11 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
+<<<<<<< HEAD
 			#y ='/montanas/b/'
+=======
+			#y ='/montanas/f/'
+>>>>>>> 775ed4ae4fad8b25c16e16dede03c1cc61430db2
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
