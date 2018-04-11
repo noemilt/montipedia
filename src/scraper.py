@@ -171,7 +171,7 @@ class MontipediaScraper():
 							relleu=valor
 						elif "País" in clau:
 							pais=valor[0:valor.find("(")].strip()				
-						elif "Cumbre" in clau:
+						elif "Cimera" in clau:
 							cimera=valor
 						elif "Región" in clau:
 							regio=valor
@@ -247,7 +247,7 @@ class MontipediaScraper():
 	def scrape(self):
 		print ("Web Scraping of montipedia data from " + "'" + self.url + "'...")
 
-		print ("This process could take roughly ??? minutes.\n")
+		print ("This process could take roughly 15 minutes.\n")
 
 		# Start timer
 		start_time = time.time()
@@ -262,13 +262,13 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
-			#y ='/montanas/k/'
+			y ='/montanas/s/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
 
 			# Uncomment this break in case of debug mode
-			#break
+			break
 
 		# For each montana, extract its data
 		for i in range(len(montanas_links)):
