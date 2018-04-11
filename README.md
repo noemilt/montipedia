@@ -9,8 +9,8 @@ Per a l'assignatura 'Tipología i cicle de vida de les dades' del Màster en Ci�
 
 ## Estructura del projecte:
   - **src/main.py**: conté els arxius necessàris per aplicar web scraping
-  - **csv/montipedia.csv**: conté el dataset generat
-  - **pdf/montipedia.pdf**: conté el document amb les respostes de la pràctica
+  - **csv/dataset.csv**: conté el dataset generat
+  - **pdf/Practica 1_ Muntanyes_del_mon.pdf**: conté el document amb les respostes de la pràctica
 
 
 ## Desenvolupat per:
