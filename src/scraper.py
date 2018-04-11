@@ -115,6 +115,8 @@ class MontipediaScraper():
 				#la pàgina no conté el títol, per tant, és errònia i no la parsejem
 				pass
 			else:
+				h2s = divact.findAll('h2')				
+				titol= h2s[0]
 				h1=h1.text
 				nom = h1[0:h1.find(",")].strip()
 				print("nom: "+ nom)
@@ -123,23 +125,26 @@ class MontipediaScraper():
 				tipus = h1[h1.find(",")+1:h1.find("(")].strip()
 
 				#recuperem la descripcio
-				h2s = divact.findAll('h2')
+				#PENDENT: Recuperar la descripcio sencera i no només el primer paràgraf
 				
-				titol= h2s[0]
-				descripcio = titol.find_next_sibling('p')
-				#recuperem els keywords
-				if descripcio:
-					aas = descripcio.findAll('a')
-					descripcio=descripcio.text.replace(';',',').replace('\n',' ').replace('\r',' ')
-					for a in aas:
-						#if a.name == 'a':
-						if a.contents[0].name=='a':
-							keyword = str(a.contents[0].contents[0])
-						else:
-							keyword = str(a.contents[0])
-						#print("keyword: "+keyword)
-						keyword_data = keyword_data + keyword + ','
-					keyword_data=keyword_data[:len(keyword_data)-1]
+				ps = divact.findAll('p')			
+				for p in ps:
+					descripcio = descripcio + p.text								
+					#recuperem els keywords
+					if descripcio:
+						aas = p.findAll('a')
+						p=p.text.replace(';',',').replace('\n',' ').replace('\r',' ')
+						for a in aas:
+							#if a.name == 'a':
+							if a.contents[0].name=='a':
+								keyword = str(a.contents[0].contents[0])
+							else:
+								keyword = str(a.contents[0])
+							#print("keyword: "+keyword)
+							keyword_data = keyword_data + keyword + ','
+						keyword_data=keyword_data[:len(keyword_data)-1]
+
+				print("DESCRIPCIO = " +descripcio)
 
 				#recuperem el continent
 				continent = titol.text[titol.text.find("(")+1:titol.text.find(")")].strip()
@@ -181,6 +186,7 @@ class MontipediaScraper():
 							alt=int(re.sub('\D', '', alt))
 							
 							#Classificació per alçada
+							#Ficar la classificació en una altra funció o .py
 							if alt < 1000: 
 								classify="menor de 1000"
 							elif alt < 2000:
@@ -215,7 +221,7 @@ class MontipediaScraper():
 					montana_data.insert(8,altitud)	
 					montana_data.insert(9,classify)	
 					montana_data.insert(10,latitud)
-					montana_data.insert(11,longitud)		
+					montana_data.insert(11,longitud)					
 					montana_data.insert(12,descripcio)	
 					montana_data.insert(13,keyword_data)		
 						
@@ -254,7 +260,7 @@ class MontipediaScraper():
 
 		# Download HTML
 		html = self.__download_html(self.url + self.subdomain)
-		bs = BeautifulSoup(html, 'html.parser')
+		#bs = BeautifulSoup(html, 'html.parser')
 
 		# Get the links of each letter
 		letters_links = self.__get_letters_links(html)
@@ -262,7 +268,7 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
-			y ='/montanas/s/'
+			y ='/montanas/a/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
