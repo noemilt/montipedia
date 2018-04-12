@@ -127,7 +127,7 @@ class MontipediaScraper():
 				#recuperem la descripcio	
 				ps = divact.findAll('p')			
 				for p in ps:
-					descripcio = descripcio + p.text								
+					descripcio = descripcio + p.text.replace(';',',').replace('\n',' ').replace('\r',' ')							
 					#recuperem els keywords
 					if descripcio:
 						aas = p.findAll('a')
