@@ -124,9 +124,7 @@ class MontipediaScraper():
 				#recuperem el tipus
 				tipus = h1[h1.find(",")+1:h1.find("(")].strip()
 
-				#recuperem la descripcio
-				#PENDENT: Recuperar la descripcio sencera i no només el primer paràgraf
-				
+				#recuperem la descripcio	
 				ps = divact.findAll('p')			
 				for p in ps:
 					descripcio = descripcio + p.text								
@@ -144,7 +142,6 @@ class MontipediaScraper():
 							keyword_data = keyword_data + keyword + ','
 						keyword_data=keyword_data[:len(keyword_data)-1]
 
-				print("DESCRIPCIO = " +descripcio)
 
 				#recuperem el continent
 				continent = titol.text[titol.text.find("(")+1:titol.text.find(")")].strip()
@@ -268,13 +265,13 @@ class MontipediaScraper():
 		# For each letter, get its montana' links
 		montanas_links = []
 		for y in letters_links:			
-			y ='/montanas/a/'
+			#y ='/montanas/a/'
 			print ("Found link to a letter of mountain: " + self.url + " y: "+y)
 			current_letter_montana = self.__get_montana_links(y)
 			montanas_links.append(current_letter_montana)
 
 			# Uncomment this break in case of debug mode
-			break
+			#break
 
 		# For each montana, extract its data
 		for i in range(len(montanas_links)):
